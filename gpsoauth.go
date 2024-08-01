@@ -14,11 +14,7 @@ const (
 	userAgent = "GoogleAuth/1.4"
 )
 
-var (
-	defaultClientSig = "38918a453d07199354f8b19af05ec6562ced5788"
-)
-
-func performOAuth(
+func PerformOAuth(
 	email,
 	masterToken,
 	gaid,
@@ -77,16 +73,18 @@ func performOAuth(
 	return "", fmt.Errorf("gpsoauth: no Auth found")
 }
 
-func performOAuthWithDefaults(
+func PerformOAuthWithDefaults(
 	email,
 	masterToken,
 	gaid,
 	service,
-	app string) (string, error) {
-	return performOAuth(email,
+	app,
+	clientSig string) (string, error) {
+	return PerformOAuth(email,
 		masterToken,
 		gaid,
 		service,
 		app,
-		defaultClientSig, "us", "us", "en", 17)
+		clientSig,
+		"us", "us", "en", 17)
 }
