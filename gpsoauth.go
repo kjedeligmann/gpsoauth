@@ -43,7 +43,7 @@ func PerformOAuth(
 		"lang":            []string{lang},
 		"sdk_version":     []string{fmt.Sprint(sdkVersion)},
 	}
-    return authRequest(data)
+	return authRequest(data)
 }
 
 func PerformOAuthWithDefaults(
@@ -58,6 +58,42 @@ func PerformOAuthWithDefaults(
 		service,
 		app,
 		DefaultClientSig, "us", "us", "en", 17)
+}
+
+func ExchangeToken(
+	email,
+	webToken,
+	gaid,
+	service,
+	clientSig,
+	deviceCountry,
+	operatorCountry,
+	lang string,
+	sdkVersion int) (AuthResponse, error) {
+	data := url.Values{
+		"accountType":        []string{"HOSTED_OR_GOOGLE"},
+		"Email":              []string{email},
+		"has_permission":     []string{"1"},
+		"add_account":        []string{"1"},
+		"ACCESS_TOKEN":       []string{"1"},
+		"Token":              []string{webToken},
+		"service":            []string{service},
+		"source":             []string{"android"},
+		"androidId":          []string{gaid},
+		"device_country":     []string{deviceCountry},
+		"operatorCountry":    []string{operatorCountry},
+		"lang":               []string{lang},
+		"sdk_version":        []string{fmt.Sprint(sdkVersion)},
+		"client_sig":         []string{clientSig},
+		"callerSig":          []string{clientSig},
+		"droidguard_results": []string{"deez"},
+	}
+	return authRequest(data)
+}
+
+func ExchangeTokenWithDefaults(email, webToken, gaid string) (AuthResponse, error) {
+	return ExchangeToken(email, webToken, gaid,
+		"ac2dm", DefaultClientSig, "us", "us", "en", 17)
 }
 
 func authRequest(data url.Values) (AuthResponse, error) {
@@ -81,17 +117,17 @@ func authRequest(data url.Values) (AuthResponse, error) {
 		return nil, fmt.Errorf("gpsoauth: %s: %s", resp.Status, b)
 	}
 
-    return parseAuthResponse(b), nil
+	return parseAuthResponse(b), nil
 }
 
 func parseAuthResponse(response []byte) AuthResponse {
-    result := AuthResponse{}
+	result := AuthResponse{}
 	for _, line := range strings.Split(string(response), "\n") {
 		sp := strings.SplitN(line, "=", 2)
 		if len(sp) != 2 {
 			continue
 		}
-        result[sp[0]] = sp[1]
+		result[sp[0]] = sp[1]
 	}
-    return result
+	return result
 }
