@@ -15,6 +15,8 @@ const (
 	DefaultClientSig = "38918a453d07199354f8b19af05ec6562ced5788"
 )
 
+type AuthResponse map[string]string
+
 func PerformOAuth(
 	email,
 	masterToken,
@@ -25,7 +27,7 @@ func PerformOAuth(
 	deviceCountry,
 	operatorCountry,
 	lang string,
-	sdkVersion int) (string, error) {
+	sdkVersion int) (AuthResponse, error) {
 	data := url.Values{
 		"accountType":     []string{"HOSTED_OR_GOOGLE"},
 		"Email":           []string{email},
@@ -41,37 +43,7 @@ func PerformOAuth(
 		"lang":            []string{lang},
 		"sdk_version":     []string{fmt.Sprint(sdkVersion)},
 	}
-
-	req, err := http.NewRequest(http.MethodPost, authURL, strings.NewReader(data.Encode()))
-	req.Header.Set("Accept-Encoding", "identity")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", userAgent)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("gpsoauth: %v", err)
-	}
-	defer resp.Body.Close()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("gpsoauth: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("gpsoauth: %s: %s", resp.Status, b)
-	}
-
-	for _, line := range strings.Split(string(b), "\n") {
-		sp := strings.SplitN(line, "=", 2)
-		if len(sp) != 2 {
-			continue
-		}
-		if sp[0] == "Auth" {
-			return sp[1], nil
-		}
-	}
-	return "", fmt.Errorf("gpsoauth: no Auth found")
+    return authRequest(data)
 }
 
 func PerformOAuthWithDefaults(
@@ -79,11 +51,47 @@ func PerformOAuthWithDefaults(
 	masterToken,
 	gaid,
 	service,
-	app string) (string, error) {
+	app string) (AuthResponse, error) {
 	return PerformOAuth(email,
 		masterToken,
 		gaid,
 		service,
 		app,
 		DefaultClientSig, "us", "us", "en", 17)
+}
+
+func authRequest(data url.Values) (AuthResponse, error) {
+	req, err := http.NewRequest(http.MethodPost, authURL, strings.NewReader(data.Encode()))
+	req.Header.Set("Accept-Encoding", "identity")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", userAgent)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("gpsoauth: %v", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("gpsoauth: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("gpsoauth: %s: %s", resp.Status, b)
+	}
+
+    return parseAuthResponse(b), nil
+}
+
+func parseAuthResponse(response []byte) AuthResponse {
+    result := AuthResponse{}
+	for _, line := range strings.Split(string(response), "\n") {
+		sp := strings.SplitN(line, "=", 2)
+		if len(sp) != 2 {
+			continue
+		}
+        result[sp[0]] = sp[1]
+	}
+    return result
 }
