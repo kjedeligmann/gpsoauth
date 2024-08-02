@@ -24,7 +24,7 @@ func main() {
 		masterToken,
 		gaid, // Google Advertising ID, or Android ID
 		scopes,
-		"com.google.android.keep", "38918a453d07199354f8b19af05ec6562ced5788")
+		"com.google.android.keep")
 	if err != nil {
 		log.Fatal(err)
 	}

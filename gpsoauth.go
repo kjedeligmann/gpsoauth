@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	authURL   = "https://android.clients.google.com/auth"
-	userAgent = "GoogleAuth/1.4"
+	authURL          = "https://android.clients.google.com/auth"
+	userAgent        = "GoogleAuth/1.4"
+	DefaultClientSig = "38918a453d07199354f8b19af05ec6562ced5788"
 )
 
 func PerformOAuth(
@@ -78,13 +79,11 @@ func PerformOAuthWithDefaults(
 	masterToken,
 	gaid,
 	service,
-	app,
-	clientSig string) (string, error) {
+	app string) (string, error) {
 	return PerformOAuth(email,
 		masterToken,
 		gaid,
 		service,
 		app,
-		clientSig,
-		"us", "us", "en", 17)
+		DefaultClientSig, "us", "us", "en", 17)
 }
